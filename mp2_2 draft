@@ -1,0 +1,297 @@
+import re
+
+class TeeClass:
+    count = 0  
+    for_flag = False
+
+    def remove_space(self, string):
+        leading_whitespace = r'^\s+'
+        return re.sub(leading_whitespace, '', string)
+
+    def if_display(self, temp):
+        self.count += 1
+
+        if_tokens = []
+        rgx = r'[^();]+'
+
+        for match in re.finditer(rgx, temp):
+            if_tokens.append(match.group())
+
+        for j in range(2, len(if_tokens)):
+            temp = if_tokens[j]
+            self.count += 1
+
+    def for_display(self, tokens):
+        self.for_flag = True
+        ctr_instruc = 0
+        for_tokens = []
+        for_string = ""
+        condition_val = 0; 
+        initial_val = 0; 
+        log_flag = False
+        base_number = 0
+
+        temp_str = tokens[0]
+        # print(f"for sample: {temp_str}")
+        for i in range(1, len(tokens)):
+            for_string += tokens[i]
+
+        # print(f"for sample: {for_string}")
+        rgx = r'[^()]+'
+        for match in re.finditer(rgx, temp_str):
+            temp_for = match.group()
+            str_for = self.remove_space(temp_for)
+            # print(f"str_for: {str_for}")
+            for_tokens.append(str_for)
+
+        statements_for = for_tokens[0]
+        if ';' in statements_for:
+            statements_for = statements_for.replace('for', '').strip()  # Remove "for" and strip whitespace
+            components = statements_for.split(';')  # Split the string by semicolons
+            self.display(components)  # Assuming display can handle a list of strings
+
+
+        temp_for = for_tokens[1]
+        component_pattern = r'[^;]+'
+        components = list(re.finditer(component_pattern, temp_for))
+
+        for idx, match in enumerate(components):
+            init_str = match.group()
+            # print(init_str)
+            if idx == 0:
+                self.count += 1  # Initializer
+                initial_pattern = r'(\w+)\s*([<>=!]+)\s*(\w+)'
+                initial_comp = list(re.finditer(initial_pattern, init_str))
+            
+                # Directly access the variable or value after the operator
+                for match in initial_comp:
+                    value_after_operator = match.group(3)  # Accessing the third group
+                    # print(value_after_operator)
+                    if(match.group(3).isdigit()):
+                        initial_val = int(match.group(3))
+                       
+            elif idx == 1:
+                ctr_instruc += 1  # Condition 
+                self.count += 1
+                Condition_pattern = r'(\w+)\s*([<>=!]+)\s*(\w+)'
+                condition_comp = list(re.finditer(Condition_pattern, init_str))
+            
+                # Directly access the variable or value after the operator
+                for match in condition_comp:
+                    value_after_operator = match.group(3)  # Accessing the third group
+                    if(match.group(3).isdigit()):
+                        condition_val = int(match.group(3))
+                        print(condition_val)
+                            
+            elif idx == 2:
+                if '*=' in init_str:
+                    base_number = re.findall(r'\d+', init_str)
+                    if base_number:  # Check if a number was found
+                        base_number = int(base_number[0])
+                        log_flag = True
+                ctr_instruc += 1  # Update
+
+
+        sep_str = []
+        rgx_colon = r'[^}]+'
+        for match in re.finditer(rgx_colon, for_string):
+            sep_str.append(self.remove_space(match.group()))
+
+        flag = False
+        statement_flag = False
+
+        # print(f"test: {ctr_instruc}")
+
+        for j in range(len(sep_str)):
+            if 'if' in sep_str[j]:
+                temp = sep_str[j]
+                if_tokens = []
+                rgx = r'[^();]+'
+
+                for match in re.finditer(rgx, temp):
+                    if_tokens.append(match.group())
+
+                for j in range(2, len(if_tokens)):
+                    temp = if_tokens[j]
+                    # print(self.remove_space(temp))
+                    if j != len(if_tokens) - 1:
+                        print()
+
+                flag = True
+
+            elif 'else' in sep_str[j]:
+                temp = sep_str[j]
+                else_str = []
+                rgx = r'[^{}]+'
+
+                for match in re.finditer(rgx, temp):
+                    else_str.append(match.group())
+
+                # for i in range(1, len(else_str)):
+                #     print(self.remove_space(else_str[i]))
+
+                flag = True
+
+            elif not statement_flag:
+                temp_str = sep_str[j]
+                forStr = ''
+                
+                rgx = r'[^;]+'
+
+                for match in re.finditer(rgx, temp_str):
+                    forStr+=match.group()
+                    print(forStr)
+
+                rgx_last = r'[^=+-;]+'
+                mulStr= ' '
+                for match in re.finditer(rgx_last, forStr):
+                    mulStr+=match.group() + ','    
+                    ctr_instruc += 1        
+                    print(f"wahh: {mulStr}")
+                    
+
+                # rgx_ast = r'[^*+-;]+'
+                rgx_ast = r'[^,]+'
+                # for match in re.finditer(rgx_ast, mulStr):
+                # #     print(f"check: {match.group()}")
+                #     tmp = match.group()
+                #     if tmp.strip() != '':  # This will be True if match.group() is not empty
+                #         ctr_instruc += 1
+                #         print(f"hey: {tmp}")
+
+                #     # if '*' in tmp:
+                    #     ctr_instruc += 1
+                #     ctr_instruc += 1
+                    # print(f"hey: {tmp}")
+
+                print(f"ctr: {ctr_instruc}")
+                statement_flag = True
+                if ctr_instruc > 6:
+                    ctr_instruc-=1
+
+            else:
+                temp_str = sep_str[j]
+                statement_str = []
+                rgx = r'[^,=]+'
+
+                # for match in re.finditer(rgx, temp_str):
+                    # print(self.remove_space(match.group()))
+        
+        print(f"check condition: {condition_val}")
+        print(f"check initial: {initial_val}")
+        print(f"check once count: {self.count}")
+        print(f"check ctr: {ctr_instruc}")      
+
+        if condition_val == 0 and initial_val > 1 and not log_flag:
+          sum = (ctr_instruc * (-initial_val + 1)) + self.count
+          print(f"T(n) = {ctr_instruc}n", end="")
+          if sum < 0:
+            print(f" - {abs(sum)}")
+          else:
+            print(f" + {sum}")
+        elif condition_val == 0 and initial_val <= 1  and not log_flag:
+          print(f"T(n) = {ctr_instruc}n", end="")
+          if self.count:
+              print(f" + {self.count}")
+        elif log_flag:
+          print(f"T(n) = {ctr_instruc} ", end="")
+          print(f"log({base_number}) n ", end="")
+          print(f"+ {ctr_instruc+self.count}")
+        elif condition_val:
+          sum = (ctr_instruc * (condition_val - initial_val + 1)) + self.count
+          print(f"T(n) = {sum}")
+
+
+    def display(self, tokens):
+        size = len(tokens)
+        flag = False
+
+        for i in range(size):
+            temp = tokens[i]
+            # temp = re.sub(r'^\s+', '', str_token)
+
+            if 'for' in temp:
+                self.for_display(tokens)
+                break
+            elif 'if' in temp:
+                self.if_display(temp)
+                flag = False
+            elif 'else' in temp:
+                else_str = []
+                rgx = r'[^{}]+'
+
+                for match in re.finditer(rgx, temp):
+                    else_str.append(match.group())
+
+                # for i in range(1, len(else_str)):
+                #     print(self.remove_space(else_str[i]))
+
+                flag = True
+            elif temp != '':
+                print(f"temp: {temp}")
+                if not flag:
+                    flag = True
+                self.count += 1
+            elif temp == '' and flag is False:
+                self.count += 1
+
+
+        if not self.for_flag:
+            print(f"T(n) = {self.count}")
+
+    def tokenize(self, snippet):
+        tokens = []
+
+        remove_pattern = r'\b(?:int|char)\b'
+        result = re.sub(remove_pattern, '', snippet)
+
+        space_pattern = r'\s+'
+        result = re.sub(space_pattern, ' ', result)
+
+        trim_pattern = r'^\s+|\s+$'
+        result = re.sub(trim_pattern, '', result)
+
+        if 'for' in snippet:
+            # print("for test")
+            rgx = r'[^{}]+'
+            for match in re.finditer(rgx, result):
+                tokens.append(match.group())
+        else:
+            rgx = r'[^,;]+'
+            temp_str = ''
+            for match in re.finditer(rgx, result):
+                if any(op in match.group() for op in ['=', '<<', '>>', '<', '>']):
+                    if ',' not in match.group():
+                        temp_str += ','
+                    temp_str += match.group()
+
+
+            print(f"sht: {temp_str}")
+            rgx_last = r'[^+-;]+'
+            for match in re.finditer(rgx_last, temp_str):
+                # if match.group() == "":
+                #     tokens.append('x')
+                # else:
+                print(f"shuta: {match.group()}")
+                tokens.append(match.group())
+
+        print(f"string: {tokens}")
+
+        self.display(tokens)
+
+def main():
+    tc = TeeClass()
+
+    line = int(input())
+    snippet = ''
+    ctr = 0
+
+    while ctr < line:
+        input_line = input()
+        snippet += input_line
+        ctr += 1
+
+    tc.tokenize(snippet)
+
+if __name__ == "__main__":
+    main()
